@@ -26,7 +26,7 @@ import java.util.List;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-public class MainActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
+public class MainActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener,TaskCompletionHandler {
     private static final String TAG = MainActivity.class.getSimpleName();
 
     @BindView(R.id.gv_movies) GridView mMoviesGridView;
@@ -47,7 +47,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         new InternetCheck(internet -> {
             if(internet) {
                 URL url = NetworkUtils.buildUrl(sortBy);
-                new MoviesHttpRequest().execute(url);
+                new HttpAsyncTask(MainActivity.this).execute(url);
             }
             else {
                 buildDialog(MainActivity.this).show();
@@ -89,53 +89,32 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         //do nothing
     }
 
+    @Override
+    public void onTaskCompleted(String response) {
+        List<Movie> movieList;
+        try {
+            movieList = MovieJsonUtils.getMovieListFromJson(response);
+            MovieAdapter movieAdapter=new MovieAdapter(MainActivity.this, movieList);
+            mMoviesGridView.setAdapter(movieAdapter);
 
-    // Class to perform network requests
-    public class MoviesHttpRequest extends AsyncTask<URL, Void, String> {
-
-        @Override
-        protected String doInBackground(URL... urls) {
-            String httpResponse = null;
-            try {
-                httpResponse = NetworkUtils.getResponseFromHttpUrl(urls[0]);
-            } catch (IOException e) {
-                Log.e(TAG, "Error reading from server:", e);
-            }
-            return httpResponse;
-        }
-
-        @Override
-        protected void onPostExecute(String s) {
-            Log.d(TAG, "Json Response: " + s);
-            if(s!=null && !s.isEmpty()) {
-                List<Movie> movieList;
-                try {
-                    movieList = MovieJsonUtils.getMovieListFromJson(s);
-                    MovieAdapter movieAdapter=new MovieAdapter(MainActivity.this, movieList);
-                    mMoviesGridView.setAdapter(movieAdapter);
-
-                    mMoviesGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                        @Override
-                        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                            Movie selectedMovie = (Movie)parent.getItemAtPosition(position);
-                            launchMovieDetailActivity(selectedMovie);
-                        }
-                    });
-
-                } catch (JSONException e) {
-                    Log.e(TAG, "Json parsing error", e);
+            mMoviesGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    Movie selectedMovie = (Movie)parent.getItemAtPosition(position);
+                    launchMovieDetailActivity(selectedMovie);
                 }
-            }
-            else {
-                Log.e(TAG, "Couldn't get json from server.");
-            }
+            });
+
+        } catch (JSONException e) {
+            Log.e(TAG, "Json parsing error", e);
         }
 
-        private void launchMovieDetailActivity(Movie selectedMovie) {
-            Intent intent = new Intent(MainActivity.this, MovieDetailActivity.class);
-            intent.putExtra(MovieDetailActivity.PARCEL_DATA, selectedMovie);
-            startActivity(intent);
-        }
+    }
+
+    private void launchMovieDetailActivity(Movie selectedMovie) {
+        Intent intent = new Intent(MainActivity.this, MovieDetailActivity.class);
+        intent.putExtra(MovieDetailActivity.PARCEL_DATA, selectedMovie);
+        startActivity(intent);
     }
 
 

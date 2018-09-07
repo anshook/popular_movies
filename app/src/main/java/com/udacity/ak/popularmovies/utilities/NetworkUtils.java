@@ -10,6 +10,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Scanner;
+import com.udacity.ak.popularmovies.BuildConfig;
 
 /**
  * These utilities will be used to communicate with the weather servers.
@@ -19,7 +20,7 @@ public final class NetworkUtils {
     private static final String TAG = NetworkUtils.class.getSimpleName();
 
     //Replace the variable MOVIEDB_API_KEY with your key from themoviedb.org
-    private static final String MOVIEDB_API_KEY = "";
+    private static final String MOVIEDB_API_KEY = BuildConfig.MOVIEDB_API_KEY;
 
     private static final String QUERY_PARAM_KEY = "api_key";
 
